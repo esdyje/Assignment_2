@@ -1,0 +1,144 @@
+---
+title: "test"
+author: "Esther Dyngby Jensen"
+date: "23/11/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+# To create empty variables
+filename= NULL
+mean = NULL
+SD = NULL
+range = NULL
+median = NULL
+IQR = NULL
+MAD = NULL
+COV = NULL
+DET = NULL
+maxL = NULL
+RR = NULL
+L = NULL
+ENTR = NULL
+rENTR = NULL
+
+n = 1
+
+# To create a filelist
+files=list.files(path = "test", pattern = ".txt")
+
+# To set working directory to file location
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
+
+# To loop through each file and compute descriptors
+for (file in files){
+  d=read.delim(file)
+  filename[n] = files[n]
+  mean[n]=mean(d$f0)
+  SD[n]=sd(d$f0)
+  range[n]=range(d$f0)
+  median[n] = median(d$f0)
+  IQR[n] = IQR(d$f0)
+  MAD[n] = aad(d$f0)
+  COV[n] = sd(d$f0)/mean(d$f0)*100
+  
+  par = list(lgM =  50, steps = seq(1, 6, 1),  radiusspan = 100,
+  radiussample = 40, normalize = 0,  rescale = 0,  mindiagline = 2,
+  minvertline = 2,  tw = 0,  whiteline = FALSE,  recpt = FALSE,
+  fnnpercent = 10,  typeami = "mindip") 
+
+  ans= try(optimizeParam(d$f0, d$f0, par, min.rec= 3.5,
+                     max.rec=4.5))
+  if (length(ans) > 1) {
+  
+  results=crqa(d$f0, d$f0, delay=ans$delay, embed=ans$emddim,
+               radius=ans$radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
+  maxL[n] = results$maxL
+  DET[n] = results$DET
+  RR[n] = results$RR
+  L[n] = results$L
+  ENTR[n] = results$ENTR
+  rENTR[n] = results$rENTR
+  } 
+  
+  else {
+    DET[n] = NA
+    maxL[n] = NA
+    RR[n] = NA
+    L[n] = NA
+    ENTR[n] = NA
+    rENTR[n] = NA
+  }
+  
+  n=n+1
+}
+
+
+Pitch_data = read.csv("Pitch_dataxx.csv")
+
+# To create dataframe with pitch descriptors
+Pitch_data=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
+
+# To create a variable according to the study
+for (file in 1:nrow(Pitch_data)){
+  if (grepl("Study1", Pitch_data$filename[file])){
+    Pitch_data$Study[file] = 1}
+  if (grepl("Study2", Pitch_data$filename[file])){
+    Pitch_data$Study[file] = 2}
+  if (grepl("Study4", Pitch_data$filename[file])){
+    Pitch_data$Study[file] = 4}
+}
+
+# To create a variable according to diagnosis
+for (file in 1:nrow(Pitch_data)){
+  if (grepl("D0", Pitch_data$filename[file])){
+    Pitch_data$Diagnosis[file] = "Control"}
+  if (grepl("D1", Pitch_data$filename[file])){
+    Pitch_data$Diagnosis[file] = "Schizophrenia"}
+}
+
+# To create a variable according to trial
+Pitch_data$Trial=regmatches(Pitch_data$filename, regexpr("[T].*[0-9]", Pitch_data$filename))
+
+Pitch_data$Trial = gsub("[T, _, f]", "", Pitch_data$Trial)
+
+Pitch_data$Trial=substr(Pitch_data$Trial, 1, nchar(Pitch_data$Trial)-1)
+
+# To create a variable according to ID
+Pitch_data$Subject = substring(Pitch_data$filename, 2)
+
+Pitch_data$Subject=regmatches(Pitch_data$Subject, regexpr("[S].*[0-9].[T]", Pitch_data$Subject))
+
+Pitch_data$Subject = gsub("[A-Z]", "", Pitch_data$Subject)
+
+# To merge the pitch data together with the demo data
+Pitch_data$Diagnosis=as.factor(Pitch_data$Diagnosis)
+Pitch_data$Subject=as.integer(Pitch_data$Subject)
+
+Pitch_data = read.csv("Pitch_data.csv")
+
+new_data = base::merge(Pitch_data, demo_data, by = c("Subject", "Diagnosis"))
+
+# To write to a csv file
+write.csv(Pitch_data, "Pitch_data.csv")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,232 @@
+---
+title: "Assignment2_Part1_VoiceInSchizophrenia"
+author: "Riccardo Fusaroli"
+date: "July 17, 2016"
+output: html_document
+--- 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment-2-schizophrenia")
+library(pastecs);library(crqa);library(lsr);library(ggplot2); library(raster);library(stringr);library(tidyverse);library(plyr);
+library(dplyr);library(lme4);library(lmerTest)
+
+```
+
+## Assignment 2 - Part 1 - Assessing voice in schizophrenia
+
+Schizophrenia has been associated with "inappropriate" voice, sometimes monotone, sometimes croaky. A few studies indicate that pitch might be an index of schizophrenia. However, an ongoing meta-analysis of the literature (which you will have a go at in the last assignment) indicates that pitch mean and standard deviation are only weak indicators of diagnosis. Can we do better with our new fancy complex skills?
+
+The corpus you are asked to analyse is a set of voice recordings from people with schizophrenia (just after first diagnosis) and 1-1 matched controls (on gender, age, education). Each participant watched 10 videos of triangles moving across the screen and had to describe them (so you have circa 10 recordings per person). I have already extracted the pitch once every 10 milliseconds and you will have to use this data to assess differences in the voice.
+
+N.B. Question to be answered via email to Celine: can you characterize voice in schizophrenia as acoustically different? Report the methods you used to answer this question and the results from the analyses. Add a couple of lines trying to interpret the results (make sense of the difference). E.g. People with schizophrenia tend to have high-pitched voice, and present bigger swings in their prosody than controls. Add a couple of lines describing limitations of the data/analyses if any is relevant.
+
+N.B. There are looots of files to be dealt with. Probably too many for your computer. This is a challenge for you. Some (complementary) possible strategies: You can select a subset of files only (and you have to justify your choice). You can learn how to use the apply() or map() functions. You can coordinate with classmates.
+
+1. In the course of this assignment you have to first select one datafile and figure out how to:
+
+- Extract "standard" descriptors of pitch: Mean, standard deviation, range
+- Extract less "standard" descriptors of pitch you can think of (e.g. median, iqr, mean absoluted deviation, coefficient of variation)
+- Extract "complex" descriptors: recurrence quantification analysis
+
+```{r setup, include=FALSE}
+#loading data
+Stud2=read.delim("Pitch/Study1D0S101T2_f0.txt")
+#extracting pitch mean, range and SD of data
+Stud2Mean=mean(Stud2$f0)
+Stud2SD=sd(Stud2$f0)
+Stud2range=range(Stud2$f0)
+
+#less standard descriptors
+Stud2median=median(Stud2$f0)
+Stud2IQR=IQR(Stud2$f0)
+Stud2MAD=aad(Stud2$f0)
+Stud2CV=(Stud2SD/Stud2Mean)*100
+
+par = list(lgM =  50, steps = seq(1, 6, 1),  radiusspan = 100,  radiussample = 40, normalize = 0,  rescale = 0,  mindiagline = 2,  minvertline = 2,  tw = 0,  whiteline = FALSE,  recpt = FALSE,  fnnpercent = 10,  typeami = "mindip")
+ans = optimizeParam(Stud2$f0, Stud2$f0, par, min.rec = 3.5, max.rec = 4.5)
+
+#results
+Results=crqa (Stud2$f0, Stud2$f0, delay=ans$delay, embed=ans$emddim, radius=ans$radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
+#plotting
+RP=Results$RP
+RP = matrix(as.numeric(RP), nrow = ncol(RP)) 
+cols = c("white","blue4")
+image(RP, xlab = "", ylab = "", col = cols)
+Profile=drpdfromts(Stud2$f0, Stud2$f0,datatype = 'continuous',ws=50,radius=ans$radius)
+timecourse = round( seq(-5000,5000,100)/1000, digit = 1)
+maxlag = Profile$maxlag/1000
+profile = Profile$profile*100
+Prof=data.frame(profile)
+#timecourseplot
+ggplot(Prof, aes(timecourse,profile))+geom_line()+ geom_vline(xintercept = timecourse[maxlag], colour='red')
+
+```
+
+##Loop
+2. Second you will have to turn the code into a function and loop through all the files (or even better use apply/sapply/lapply)
+- Remember to extract the relevant information from the file names (Participant, Diagnosis, Trial, Study)
+```{r setup, include=FALSE}
+
+Participant= NULL;Trial=NULL ; Study=NULL ; Diagnosis=NULL ; mean = NULL
+SD = NULL ; range = NULL ; median = NULL ; IQR = NULL ; MAD = NULL ; COV = NULL
+DET = NULL ; maxL = NULL ; RR = NULL ; L = NULL ; ENTR = NULL ; rENTR = NULL
+
+n = 1
+
+files=list.files(path = "test", pattern = ".txt")
+
+for (file in files){
+  d=read.delim(paste0("test/",file))
+  #to get ID number from filename
+  ID=str_extract(file, "S+\\d+")
+  Participant[n]=str_extract(ID, "\\d+")
+  #to get TRIAL number extracted from filename
+  TNO=str_extract(file, "T+\\d+")
+  Trial[n]=str_extract(TNO, "\\d+")
+  #To get study Number 1 or 2.
+  SNO=str_extract(file, "S\\d")
+  Study[n]=str_extract(SNO, "\\d")
+  #Getting Diagnosis
+  DIA=str_extract(file, "D+\\d+")
+  Diagnosis[n]=str_extract(DIA, "\\d+") #0=control, 1=schizodiagnosis
+  #getting desc. values
+  mean[n]=mean(d$f0)
+  SD[n]=sd(d$f0)
+  range[n]=diff(range(d$f0))
+  median[n]=median(d$f0)
+  IQR[n]=IQR(d$f0)
+  MAD[n]=aad(d$f0)
+  COV[n]=sd(d$f0)/mean(d$f0)*100
+  
+  par = list(lgM =  50, steps = seq(1, 6, 1),  radiusspan = 100,
+  radiussample = 40, normalize = 0,  rescale = 0,  mindiagline = 2,
+  minvertline = 2,  tw = 0,  whiteline = FALSE,  recpt = FALSE,
+  fnnpercent = 10,  typeami = "mindip") 
+
+  ans= try(optimizeParam(d$f0, d$f0, par, min.rec= 3.5,
+                     max.rec=4.5))
+  if (length(ans) > 1) {
+  
+  results=crqa(d$f0, d$f0, delay=ans$delay, embed=ans$emddim,
+               radius=ans$radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
+  
+  maxL[n] = results$maxL
+  DET[n] = results$DET
+  RR[n] = results$RR #recurrence rate
+  L[n] = results$L
+  ENTR[n] = results$ENTR
+  rENTR[n] = results$rENTR
+  } 
+  
+  else {
+    DET[n] = NA #determination
+    maxL[n] = NA
+    RR[n] = NA
+    L[n] = NA
+    ENTR[n] = NA
+    rENTR[n] = NA
+  }
+  
+  n=n+1
+}
+
+datasetx=data.frame(Participant, Diagnosis, Trial, Study, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
+datasetx$Diagnosis=revalue(datasetx$Diagnosis,c("0"="Control", "1"="Schizo"))
+
+#write to csv file
+write.csv(datasetx,"datafile.csv")
+```
+
+#### Setting up articulation data
+```{r setup, include=FALSE}
+
+artD=read.delim("Articulation.txt", sep = ",")
+demD=read.delim("DemoData.txt", sep="")
+
+#editing Articulation Data
+
+#get variable for ID name
+artD$ID=str_extract(artD$soundname, "S+\\d+");artD$ID=str_extract(artD$ID, "\\d+")
+
+#get variable for trial number
+TNOA=str_extract(artD$soundname, "T+\\d+")
+artD$Trial=str_extract(TNOA, "\\d+")
+
+#To get varibale for study Number 1 or 2.
+SNOA=str_extract(artD$soundname, "S\\d")
+artD$Study=str_extract(SNOA, "\\d")
+
+#Get variable of diagnosis
+DIAA=str_extract(artD$soundname, "D+\\d+")
+artD$Diagnosis=str_extract(DIAA, "\\d+") #0=control, 1=schizodiagnosis
+artD$Diagnosis=revalue(artD$Diagnosis,c("0"="Control", "1"="Schizo"))
+
+#rearranging variables in dataframe
+artD=artD[c("soundname","ID", "Trial", "Study", "Diagnosis", "nsyll", "npause","dur..s.","phonationtime..s.","speechrate..nsyll.dur.","articulation.rate..nsyll...phonationtime.", "ASD..speakingtime.nsyll.")]
+```
+
+
+```{r setup, include=FALSE}
+#merging data
+Pitchdata=read.csv("datafile.csv")
+
+demD = rename(demD,c('Subject'='ID'))
+Pitchdata = rename(Pitchdata,c('Participant'='ID'))
+Pitchdata=Pitchdata[,-1]
+new_data = merge(Pitchdata, demD, by = c("ID", "Diagnosis", "Study"))
+
+#create CSV file of merged data
+write.csv(new_data,"PitchDemData.csv")
+```
+##Creating models.
+3. Make one model per acoustic feature and test whether you can observe significant difference due to Diagnosis. Tip: Which other fixed factors should you control for (that is, include in the model)? Which random ones?
+- Bonus points: cross-validate the model and report the betas and standard errors from all rounds to get an idea of how robust the estimates are. 
+```{r setup, include=FALSE}
+Data=read.csv("Celine_data.csv")
+Data=Data[,-1]
+#making varibles factorial or integer
+
+names(Data)[names(Data) == 'participant'] <- 'ID'
+names(Data)[names(Data) == 'stdDev'] <- 'SD'
+
+Data$ID=as.integer(Data$ID)
+Data$Study=as.factor(Data$Study)
+
+Model1=lmer(mean~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model1)
+
+Model2=lmer(SD~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model2)
+
+Model3=lmer(range~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model3)
+
+Model4=lmer(median~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model4)
+
+
+```
+
+3a. Is study a significant predictor in these models? What should you infer from this? Does study interact with diagnosis? What should you infer from this?
+```{r setup, include=FALSE}
+#interactionmodel
+
+```
+
+
+
+
+```{r setup, include=FALSE}
+
+```
+4. Bonus Question: Compare effect size of diagnosis across the different measures. Which measure seems most sensitive?
+- Tip: to compare across measures you need to put all of them on the same scale, that is, you need to "standardize" them (z-score)
+
+5. Bonus question. In the Clinical Info file you have additional information about the participants. Which additional parameters (e.g. age, gender) should we control for? Report the effects.
+
+6. Write a paragraph reporting methods and results
+
+[Next assignment: can we use these measures to build a tool that diagnoses people from voice only?]
+
+## N.B. Remember to save the acoustic features of voice in a separate file, so to be able to load them next time
