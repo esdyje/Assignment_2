@@ -38,7 +38,7 @@ n = 1
 files=list.files(path = "test", pattern = ".txt")
 
 # To set working directory to file location
-setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2/test")
 
 # To loop through each file and compute descriptors
 for (file in files){
@@ -84,10 +84,11 @@ for (file in files){
 }
 
 
-Pitch_data = read.csv("Pitch_dataxx.csv")
-
 # To create dataframe with pitch descriptors
 Pitch_data=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
+
+
+Pitch_data = read.csv("Pitch_data.csv")
 
 # To create a variable according to the study
 for (file in 1:nrow(Pitch_data)){
@@ -124,8 +125,6 @@ Pitch_data$Subject = gsub("[A-Z]", "", Pitch_data$Subject)
 # To merge the pitch data together with the demo data
 Pitch_data$Diagnosis=as.factor(Pitch_data$Diagnosis)
 Pitch_data$Subject=as.integer(Pitch_data$Subject)
-
-Pitch_data = read.csv("Pitch_data.csv")
 
 new_data = base::merge(Pitch_data, demo_data, by = c("Subject", "Diagnosis"))
 
