@@ -1,0 +1,268 @@
+--- 
+title: "Assignment 3 - Part 2 - Diagnosing Schizophrenia from Voice"
+author: "Riccardo Fusaroli"
+date: "October 17, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Schiz proj part 2")
+data=read.csv("Schizophrenia_data.csv")
+library(pastecs);library(lme4);library(lmerTest);library(ggplot2);library(caret);library(pROC);library(tidyverse);library(caret);library(cvms); library(groupdata2) 
+data=data[,-1]
+```
+
+## Assignment 3 - Diagnosing schizophrenia from voice
+
+In the previous part of the assignment you generated a bunch of "features", that is, of quantitative descriptors of voice in schizophrenia, focusing on pitch.
+In the course of this assignment we will use them to try to automatically diagnose schizophrenia from voice only, that is, relying on the set of features you produced last time, we will try to produce an automated classifier.
+
+### Question 1: Can you diagnose schizophrenia from pitch range only? If so, how well?
+
+Build a logistic regression to see whether you can diagnose schizophrenia from pitch range only.
+
+Calculate the different performance measures (accuracy, sensitivity, specificity, PPV, NPV, ROC curve) on a logistic regression using the full dataset. Don't forget the random effects!
+
+Then cross-validate the logistic regression and re-calculate performance on the testing folds. N.B. The cross-validation functions you already have should be tweaked: you need to calculate these new performance measures.
+
+N.B. the predict() function generates log odds (the full scale between minus and plus infinity). Log odds > 0 indicates a choice of 1, below a choice of 0.
+N.B. you need to decide whether calculate performance on each single test fold or save all the prediction for test folds in one datase, so to calculate overall performance.
+N.B. Now you have two levels of structure: subject and study. Should this impact your cross-validation?
+
+#### Q 1 code
+```{r setup, include=FALSE}
+
+ggplot(data,aes(range,Diagnosis,colour=Diagnosis))+geom_point()+theme_classic()
+#control=0  schizophrenia = 1
+#1.1
+#making general logistic model
+model=glmer(Diagnosis~range+(1+Trial|Subject),data,family="binomial")
+summary(model)
+#inverting
+exp(0.2699) #1.3% er schizo/typ, rest
+
+Celine=read.csv("final_rqa.csv")
+length(Celine,diagnosis)
+#1.2
+data$PredictionsPerc=predict(model) 
+data$Predictions[data$PredictionsPerc>0]="Schizophrenia"
+data$Predictions[data$PredictionsPerc<=0]="Control"
+confusionMatrix(data = data$Predictions, reference = data$Diagnosis, positive = "Schizophrenia")
+
+rocCurve <- roc(response = data$Diagnosis,predictor = data$PredictionsPerc) 
+auc(rocCurve)   
+ci (rocCurve) 
+plot(rocCurve, legacy.axes = TRUE)  
+
+```
+
+#####prep: creating folds
+```{r setup, include=FALSE}
+#creating folds
+data$Subject=as.factor(data$Subject)
+
+#unique folds for subject no. (1...2..3..)
+functionF=function(data,col){
+  data$folds_ID=as.numeric(interaction(data[,col]))
+  return(data[order(data$folds_ID),])
+}
+
+#adding the subject no. to dataframe
+data=functionF(data,"Subject")
+
+#subsetting diagnosis seperately 
+DataSCH=subset(data,data$Diagnosis=="Schizophrenia")
+DataCON=subset(data,data$Diagnosis=="Control")
+
+DataSCH=functionF(DataSCH,"Subject")
+DataCON=functionF(DataCON,"Subject")
+
+#making folds within subsets
+foldsSCH=createFolds(unique(DataSCH$folds_ID),5)
+foldsCON=createFolds(unique(DataCON$folds_ID),5)
+
+fold_list=c()
+fold_list$fold1=c(foldsSCH$Fold1,foldsCON$Fold1)
+fold_list$fold2=c(foldsSCH$Fold2,foldsCON$Fold2)
+fold_list$fold3=c(foldsSCH$Fold3,foldsCON$Fold3)
+fold_list$fold4=c(foldsSCH$Fold4,foldsCON$Fold4)
+fold_list$fold5=c(foldsSCH$Fold5,foldsCON$Fold5)
+
+#Merging data 
+newData=rbind(DataCON, DataSCH)
+```
+
+######Crossvalidating
+```{r setup, include=FALSE}
+newData=newData[complete.cases(newData$DET),]
+
+test_Accuracy=NULL
+test_Specificity=NULL
+test_Sensitivity=NULL
+test_PosPredV=NULL
+test_NegPredV=NULL
+test_AUC=NULL
+n=1 
+
+for (fold in fold_list) {
+  #subset of data
+  train=subset(newData,!(folds_ID %in% fold))
+  #create a test
+  test=subset(newData,(folds_ID%in% fold))
+  
+  #to train model 
+  modeltrain=glmer(Diagnosis~range+(1+Trial|folds_ID),train, family="binomial")
+  #Predicting
+  test$PredictionsPerc=predict(modeltrain, test, allow.new.levels = T) 
+  test$Predictions[test$PredictionsPerc>0]="Schizophrenia"
+  test$Predictions[test$PredictionsPerc<=0]="Control"
+  test$Predictions=as.factor(test$Predictions)
+  #outcome from test data
+  cm=confusionMatrix(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia")
+  test_Accuracy[n]= cm$overall["Accuracy"]
+  test_Sensitivity[n]=sensitivity(data = test$Predictions, reference = test$Diagnosis, positive ="Schizophrenia") 
+  test_Specificity[n]=specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control")  
+  test_PosPredV[n]=posPredValue(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
+  test_NegPredV[n]=negPredValue(data = test$Predictions, reference = test$Diagnosis, negative = "Control") 
+  ROC=roc(response = test$Diagnosis,predictor = test$PredictionsPerc)
+  test_AUC[n]=auc(ROC) 
+   n=n+1
+  #saving variables
+}
+
+ #get out variables from loop
+test.data=data.frame(test_Sensitivity,test_Specificity,test_Accuracy,test_PosPredV,test_NegPredV,test_AUC)
+
+```
+
+
+### Question 2
+Which single predictor is the best predictor of diagnosis?
+```{r setup, include=FALSE}
+#making crossvalidation function
+CV_function = function(data, model) {
+
+# To create empty variables
+Accuracy = NULL
+Specificity = NULL
+Sensitivity = NULL
+PosPredV = NULL
+NegPredV = NULL
+AUC = NULL
+
+n = 1
+
+for (fold in fold_list) {
+  #subset of data
+  train=subset(data,!(folds_ID %in% fold))
+  #create a test
+  test=subset(data,(folds_ID%in% fold))
+  
+  #to train model 
+  model1=glmer(model, train, family="binomial")
+  #Predicting
+  test$PredictionsPerc=predict(model1, test, allow.new.levels = T) 
+  test$Predictions[test$PredictionsPerc>0]="Schizophrenia"
+  test$Predictions[test$PredictionsPerc<=0]="Control"
+  test$Predictions=as.factor(test$Predictions)
+ 
+   #outcome from test data
+  cm=confusionMatrix(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia")
+  
+  Accuracy[n]= cm$overall["Accuracy"]
+  Sensitivity[n]=sensitivity(data = test$Predictions, reference = test$Diagnosis, positive ="Schizophrenia") 
+  Specificity[n]=specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control")  
+  PosPredV[n]=posPredValue(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
+  NegPredV[n]=negPredValue(data = test$Predictions, reference = test$Diagnosis, negative = "Control") 
+  ROC=roc(response = test$Diagnosis,predictor = test$PredictionsPerc)
+  AUC[n]=auc(ROC) 
+   n=n+1
+  #saving variables
+  }
+results = data.frame(Accuracy, Sensitivity, Specificity, PosPredV, NegPredV, AUC)
+
+return(results)
+
+}
+```
+After loop within functions, the results are used
+```{r setup, include=FALSE}
+mean_results = CV_function(newData, Diagnosis ~ mean + (1+Trial|Subject))
+SD_results = CV_function(newData, Diagnosis ~ SD + (1+Trial|Subject))
+median_results = CV_function(newData, Diagnosis ~ median + (1+Trial|Subject))
+RR_results = CV_function(newData, Diagnosis ~ RR + (1+Trial|Subject))
+ENTR_results = CV_function(newData, Diagnosis ~ ENTR + (1+Trial|Subject))
+rENTR_results = CV_function(newData, Diagnosis ~ rENTR + (1+Trial|Subject))
+
+# To obtain the mean area under the curve, which is a measure of overall performance
+mean(SD_results$AUC) #.63
+mean(mean_results$AUC) #.51
+mean(median_results$AUC) #.51
+mean(RR_results$AUC) #.52
+mean(ENTR_results$AUC) #.60
+mean(rENTR_results$AUC) #.53
+```
+The best predictor of diagnosis from the above tested variables is standard deviation of pitch, since the mean value of the area under the curve AUC is the highest, AUC(.63). Yet this value is not particularly great, and since it is the best of the above tested values, the way of analysis or the value chosen to represent the best model is poor. Of this data is is not possible to make a satisfying model of prediction for schizophrenia diagnostication.
+
+### Question 3 - Which combination of acoustic predictors is best for diagnosing schizophrenia?
+
+Now it's time to go wild! Use all (voice-related) variables and interactions you can think of. Compare models and select the best performing model you can find.
+
+Remember:
+- Out-of-sample error crucial to build the best model!
+- After choosing the model, send Celine and Riccardo the code of your model
+
+```{r setup, include=FALSE}
+# First making a model combining two variables predicting diagnosis. Afterwards obtaining the mean area under the curve(AUC), which is a measure of overall performance
+combination1= CV_function(newData, Diagnosis ~ mean*range + (1+Trial|Subject))
+mean(combination1$AUC) #AUC(.61)
+
+combination2= CV_function(newData, Diagnosis ~ MAD*range + (1+Trial|Subject))
+mean(combination2$AUC) #mean AUC(.63)
+
+comb3= CV_function(newData, Diagnosis ~ SD*range + (1+Trial|Subject))
+mean(comb3$AUC) #mean AUC(.63)
+
+comb4= CV_function(newData, Diagnosis ~ SD*MAD + (1+Trial|Subject))
+mean(comb4$AUC) #mean AUC(.63)
+
+comb5= CV_function(newData, Diagnosis ~ mean*ENTR + (1+Trial|Subject))
+mean(comb5$AUC) #mean AUC(.57)
+
+comb6= CV_function(newData, Diagnosis ~ SD*rENTR + (1+Trial|Subject))
+mean(comb6$AUC) #mean AUC(.59)
+
+# comb7= CV_function(newData, Diagnosis ~ mean*range + (1+Trial|Subject))
+# mean(comb7$AUC)
+# 
+# comb8= CV_function(newData, Diagnosis ~ mean*range + (1+Trial|Subject))
+# mean(comb8$AUC)
+
+SD_results = CV_function(newData, Diagnosis ~ SD + (1+Trial|Subject))
+median_results = CV_function(newData, Diagnosis ~ median + (1+Trial|Subject))
+RR_results = CV_function(newData, Diagnosis ~ RR + (1+Trial|Subject))
+ENTR_results = CV_function(newData, Diagnosis ~ ENTR + (1+Trial|Subject))
+rENTR_results = CV_function(newData, Diagnosis ~ rENTR + (1+Trial|Subject))
+
+
+mean(SD_results$AUC) #.63
+mean(mean_results$AUC) #.51
+mean(median_results$AUC) #.51
+mean(RR_results$AUC) #.52
+mean(ENTR_results$AUC) #.60
+mean(rENTR_results$AUC) #.53
+```
+### Question 4: Properly report the results
+
+METHODS SECTION: how did you analyse the data? That is, how did you extract the data, designed the models and compared their performance?
+
+RESULTS SECTION: can you diagnose schizophrenia based on voice? which features are used? Comment on the difference between the different performance measures.
+
+### Bonus question 5
+
+You have some additional bonus data involving speech rate, pauses, etc. Include them in your analysis. Do they improve classification?
+
+### Bonus question 6
+
+Logistic regression is only one of many classification algorithms. Try using others and compare performance. Some examples: Discriminant Function, Random Forest, Support Vector Machine, etc. The package caret provides them.
