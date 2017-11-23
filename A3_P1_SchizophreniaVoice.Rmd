@@ -214,12 +214,6 @@ summary(Model4)
 
 ```
 
-
-
-
-```{r setup, include=FALSE}
-
-```
 4. Bonus Question: Compare effect size of diagnosis across the different measures. Which measure seems most sensitive?
 - Tip: to compare across measures you need to put all of them on the same scale, that is, you need to "standardize" them (z-score)
 
