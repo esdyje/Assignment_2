@@ -145,6 +145,7 @@ write.csv(datasetx,"datafile.csv")
 
 #### Setting up articulation data
 ```{r setup, include=FALSE}
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
 
 artD=read.delim("Articulation.txt", sep = ",")
 demD=read.delim("DemoData.txt", sep="")
@@ -211,7 +212,11 @@ summary(Model3)
 Model4=lmer(median~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
 summary(Model4)
 
+Model5=lmer(DET~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model5)
 
+Model6=lmer(COV~diagnosis+trial+(1+diagnosis+trial|ID)+(1|study), Data)
+summary(Model6)
 ```
 
 3a. Is study a significant predictor in these models? What should you infer from this? Does study interact with diagnosis? What should you infer from this?
