@@ -64,9 +64,8 @@ profile = Profile$profile*100
 Prof=data.frame(profile) 
 
 #timecourseplot
-ggplot(Prof, aes(timecourse,profile)) + geom_line() + geom_vline(xintercept = timecourse[maxlag], colour='red')
+ggplot2::ggplot(Prof, aes(timecourse,profile)) + geom_line() + geom_vline(xintercept = timecourse[maxlag], colour='red')
 
-yah
 ```
 
 ##Loop
