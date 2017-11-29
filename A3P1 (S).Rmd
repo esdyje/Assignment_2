@@ -145,11 +145,10 @@ for (file in files){
   n=n+1
 }
 
-Pitch_data = read.csv("Pitch_data.csv")
 
 # To create dataframe with pitch descriptors
 Pitch_data=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
-
+Pitch_data = read.csv("Pitch_data.csv")
 ----
 
 
