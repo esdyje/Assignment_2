@@ -33,34 +33,40 @@ N.B. There are looots of files to be dealt with. Probably too many for your comp
 #loading data
 Stud2=read.delim("Pitch/Study1D0S101T2_f0.txt")
 #extracting pitch mean, range and SD of data
-Stud2Mean=mean(Stud2$f0)
-Stud2SD=sd(Stud2$f0)
-Stud2range=range(Stud2$f0)
+mean(Stud2$f0)
+sd(Stud2$f0)
+range(Stud2$f0)
 
 #less standard descriptors
-Stud2median=median(Stud2$f0)
-Stud2IQR=IQR(Stud2$f0)
-Stud2MAD=aad(Stud2$f0)
-Stud2CV=(Stud2SD/Stud2Mean)*100
-
-par = list(lgM =  50, steps = seq(1, 6, 1),  radiusspan = 100,  radiussample = 40, normalize = 0,  rescale = 0,  mindiagline = 2,  minvertline = 2,  tw = 0,  whiteline = FALSE,  recpt = FALSE,  fnnpercent = 10,  typeami = "mindip")
-ans = optimizeParam(Stud2$f0, Stud2$f0, par, min.rec = 3.5, max.rec = 4.5)
+median(Stud2$f0)
+IQR(Stud2$f0)
+aad(Stud2$f0)
+(sd(Stud2$f0)/mean(Stud2$f0))*100
 
 #results
-Results=crqa (Stud2$f0, Stud2$f0, delay=ans$delay, embed=ans$emddim, radius=ans$radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
-#plotting
-RP=Results$RP
-RP = matrix(as.numeric(RP), nrow = ncol(RP)) 
-cols = c("white","blue4")
-image(RP, xlab = "", ylab = "", col = cols)
-Profile=drpdfromts(Stud2$f0, Stud2$f0,datatype = 'continuous',ws=50,radius=ans$radius)
-timecourse = round( seq(-5000,5000,100)/1000, digit = 1)
-maxlag = Profile$maxlag/1000
-profile = Profile$profile*100
-Prof=data.frame(profile)
-#timecourseplot
-ggplot(Prof, aes(timecourse,profile))+geom_line()+ geom_vline(xintercept = timecourse[maxlag], colour='red')
+par = list(lgM =  50, steps = seq(1, 6, 1),  radiusspan = 100, radiussample = 40, normalize = 0,  rescale = 0,  mindiagline = 2, minvertline = 2,  tw = 0,  whiteline = FALSE,  recpt = FALSE, fnnpercent = 10,  typeami = "mindip") 
 
+ans= optimizeParam(Stud2$f0, Stud2$f0, par, min.rec= 3.5, max.rec=4.5)
+
+Results=crqa(Stud2$f0, Stud2$f0, delay=ans$delay, embed=ans$emddim,
+             radius=ans$radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
+
+
+RP=Results$RP       
+RP = matrix(as.numeric(RP), nrow = ncol(RP))  
+cols = c("white","blue4") 
+image(RP, xlab = "", ylab = "", col = cols)
+
+Profile=drpdfromts(Stud2$f0, Stud2$f0, datatype='continuous', ws=50,radius=ans$radius) 
+timecourse = round( seq(-5000,5000,100)/1000, digit = 1) 
+maxlag = Profile$maxlag/1000 
+profile = Profile$profile*100 
+Prof=data.frame(profile) 
+
+#timecourseplot
+ggplot(Prof, aes(timecourse,profile)) + geom_line() + geom_vline(xintercept = timecourse[maxlag], colour='red')
+
+yah
 ```
 
 ##Loop
@@ -211,7 +217,8 @@ summary(Model4)
 3a. Is study a significant predictor in these models? What should you infer from this? Does study interact with diagnosis? What should you infer from this?
 ```{r setup, include=FALSE}
 #interactionmodel
-
+model5=lmer(mean~diagnosis*study+trial+(1+diagnosis+trial|ID), Data)
+summary(model5)
 ```
 
 4. Bonus Question: Compare effect size of diagnosis across the different measures. Which measure seems most sensitive?
