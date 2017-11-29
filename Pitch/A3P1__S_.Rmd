@@ -150,6 +150,9 @@ Pitch_data = read.csv("Pitch_data.csv")
 # To create dataframe with pitch descriptors
 Pitch_data=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
 
+----
+
+
 # To create a variable according to the study
 for (file in 1:nrow(Pitch_data)){
   if (grepl("Study1", Pitch_data$filename[file])){
