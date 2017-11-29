@@ -190,7 +190,10 @@ write.csv(new_data,"PitchDemData.csv")
 3. Make one model per acoustic feature and test whether you can observe significant difference due to Diagnosis. Tip: Which other fixed factors should you control for (that is, include in the model)? Which random ones?
 - Bonus points: cross-validate the model and report the betas and standard errors from all rounds to get an idea of how robust the estimates are. 
 ```{r setup, include=FALSE}
-Data=read.csv("Celine_data.csv")
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
+
+Data=read.csv2("PitcDemData.csv")
+
 Data=Data[,-1]
 #making varibles factorial or integer
 
