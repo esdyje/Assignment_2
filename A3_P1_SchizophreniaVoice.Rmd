@@ -173,6 +173,7 @@ artD=artD[c("soundname","ID", "Trial", "Study", "Diagnosis", "nsyll", "npause","
 
 
 ```{r setup, include=FALSE}
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
 #merging data
 Pitchdata=read.csv("datafile.csv")
 
