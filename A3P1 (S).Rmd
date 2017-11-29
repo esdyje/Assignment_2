@@ -147,8 +147,10 @@ for (file in files){
 
 
 # To create dataframe with pitch descriptors
-Pitch_data=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
-Pitch_data = read.csv("Pitch_data.csv")
+Pitch_d=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, RR, L, ENTR, rENTR)
+write.csv(Pitch_d,"dataPitch.csv")
+
+Pitch_data = read.csv("dataPitch.csv")
 ----
 
 
