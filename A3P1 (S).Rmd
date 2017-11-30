@@ -24,7 +24,7 @@ N.B. There are looots of files to be dealt with. Probably too many for your comp
 setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
 
 # Loading libraries
-library(raster); library(lsr); library(crqa); library(ggplot2)
+library(raster); library(lsr); library(crqa); library(ggplot2);library(plyr)
 
 # Load in the first datafile
 data1=read.delim("Pitch/Study1D0S102T1_f0.txt")
@@ -151,11 +151,11 @@ Pitch_d=data.frame(filename, mean, SD, range, median, IQR, MAD, COV, DET, maxL, 
 write.csv(Pitch_d,"dataPitch.csv")
 
 Pitch_data = read.csv("dataPitch.csv")
+Pitch_data=Pitch_data[,-1]
 ----
 
-
 # To create a variable according to the study
-for (file in 1:nrow(Pitch_data)){
+for (file in 1:nrow(Pitch_d)){
   if (grepl("Study1", Pitch_data$filename[file])){
     Pitch_data$Study[file] = 1}
   if (grepl("Study2", Pitch_data$filename[file])){
@@ -186,16 +186,81 @@ Pitch_data$Subject=regmatches(Pitch_data$Subject, regexpr("[S].*[0-9].[T]", Pitc
 
 Pitch_data$Subject = gsub("[A-Z]", "", Pitch_data$Subject)
 
-# To merge the pitch data together with the demo data
+# To code variables in Pitch_data
 Pitch_data$Diagnosis=as.factor(Pitch_data$Diagnosis)
 Pitch_data$Subject=as.integer(Pitch_data$Subject)
 
-Pitch_data = read.csv("Pitch_data.csv")
-
-new_data = base::merge(Pitch_data, demo_data, by = c("Subject", "Diagnosis"))
-
 # To write to a csv file
 write.csv(Pitch_data, "Pitch_data.csv")
+
+# To read Pitch_data
+Pitch_data = read.csv("Pitch_data.csv")
+
+# To merge Demo data and Pitch data
+new_data = base::merge(Pitch_data, demo_data, by = c("Subject", "Diagnosis", "Study"))
+
+# To remove part of text in filename
+new_data$filename=regmatches(new_data$filename, regexpr("[S].*[_]", new_data$filename))
+new_data$filename = gsub("[_]", "", new_data$filename)
+
+# To rename column name
+arti_data = read.delim("Articulation.txt", sep = ",")
+arti_data = rename(arti_data, c("soundname"="filename"))
+
+# To merge datafiles
+new_data2 = base::merge(new_data, arti_data, by = "filename")
+
+# To delete X column
+newdata2=new_data2[,-5]
+
+# To write to a csv file
+write.csv(new_data2, "Schizophrenia_data.csv")
+
+```
+
+
+```{r}
+SCZdata=read.csv("Schizophrenia_data.csv")
+
+# To create one model per acoustic feature
+model1 = lmer(mean ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model1) #sig
+
+model2 = lmer(SD ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model2)
+
+model3 = lmer(range ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model3)
+
+model4 = lmer(median ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model4) #sig 
+
+model5 = lmer(IQR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model5)
+
+model6 = lmer(MAD ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model6)
+
+model7 = lmer(COV ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model7) #sig
+
+model8 = lmer(DET ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model8)
+
+model9 = lmer(maxL ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model9)
+
+model10 = lmer(RR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model10)
+
+model11 = lmer(L ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(model11)
+
+m12 = lmer(ENTR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(m12) #sig!!!
+
+m13 = lmer(rENTR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
+summary(m13)
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.

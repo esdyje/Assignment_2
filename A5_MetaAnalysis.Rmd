@@ -21,8 +21,10 @@ data=read.csv("Data.csv", sep=";")
 ## Questions to be answered
 ###Exercise 1
 1. What is the current evidence for distinctive patterns of pitch mean and pitch sd in schizophrenia? Report how many papers report quantitative estimates, your method to analyze them, the estimated effect size of the difference (mean effect size and standard error for pitch mean, same for pitch sd) and forest plots representing it. 
-```{r}
 
+######Yi=Cohen's D
+######Vi=variance of Cohen's D
+```{r}
 #using escalc for effectsize
 PitchRangeM=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchMeanSchizo, m2i=PitchMeanControls, sd1i=PitchMeanSchizoSD, sd2i=PitchMeanControlsSD, data = data)
 
@@ -33,9 +35,6 @@ summary(ModelM)
 resM = rma(yi, vi, data = PitchRangeM, slab=Article)
 summary(resM)
 forest(resM)
-
-#Yi=Cohen's D
-#Vi=variance of Cohen's D
 
 SubsetM=subset(PitchRangeM[PitchRangeM$vi>0,])
 SCHIpar=sum(SubsetM$SampleSizeSchizo, na.rm=T)
@@ -55,6 +54,7 @@ ModelSD = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchRangeSD, contro
 summary(ModelSD)
 
 resSD = rma(yi, vi, data = PitchRangeSD, slab=Article)
+summary(resSD)
 forest(resSD)
 
 SubsetSD=subset(PitchRangeSD[PitchRangeSD$vi>0,])
