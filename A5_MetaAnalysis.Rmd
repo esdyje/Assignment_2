@@ -10,6 +10,7 @@ output: html_document
 setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
 
 #library to relevant packages
+library(metafor);library(pacman);library(lmerTest)
 
 #read data
 data=read.csv("Data.csv", sep=";")
@@ -18,20 +19,63 @@ data=read.csv("Data.csv", sep=";")
 # Building on the shoulders of giants: meta-analysis
 
 ## Questions to be answered
-
+###Exercise 1
 1. What is the current evidence for distinctive patterns of pitch mean and pitch sd in schizophrenia? Report how many papers report quantitative estimates, your method to analyze them, the estimated effect size of the difference (mean effect size and standard error for pitch mean, same for pitch sd) and forest plots representing it. 
 ```{r}
 
-```
+#using escalc for effectsize
+PitchRangeM=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchMeanSchizo, m2i=PitchMeanControls, sd1i=PitchMeanSchizoSD, sd2i=PitchMeanControlsSD, data = data)
 
+# making lm
+ModelM = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchRangeM, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(ModelM)
+
+resM = rma(yi, vi, data = PitchRangeM, slab=Article)
+summary(resM)
+forest(resM)
+
+#Yi=Cohen's D
+#Vi=variance of Cohen's D
+
+SubsetM=subset(PitchRangeM[PitchRangeM$vi>0,])
+SCHIpar=sum(SubsetM$SampleSizeSchizo, na.rm=T)
+CONRpar=sum(SubsetM$SampleSizeContros, na.rm=T)
+```
+####Reporting
+4 studies
+166 participants with schizophrenia and 95 comparison participants.
+The overall estimated difference (Cohen’s d) in pitch variability between the ASD and the comparison groups was 0.18, SE= 0.17
+
+```{r}
+#using escalc for standarderror
+PitchRangeSD=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchSDSchizo, m2i=PitchSDControls, sd1i=PitchSDSchizoSD, sd2i=PitchSDControlsSD, data = data)
+
+# making lm
+ModelSD = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchRangeSD, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(ModelSD)
+
+resSD = rma(yi, vi, data = PitchRangeSD, slab=Article)
+forest(resSD)
+
+SubsetSD=subset(PitchRangeSD[PitchRangeSD$vi>0,])
+SCHIparSD=sum(SubsetSD$SampleSizeSchizo, na.rm=T)
+CONRparSD=sum(SubsetSD$SampleSizeContros, na.rm=T)
+```
+####Reporting
+6 studies
+257 participants with schizophrenia and 156 comparison participants.
+The overall estimated difference (Cohen’s d) in pitch variability between the schizophrenia and the comparison groups was -0.13, SE= 0.58
+
+###Exercise 2
 2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
 ```{r}
+Pitch_data = read.csv("dataPitch.csv")
 
 ```
 
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
 ```{r}
-do summary of model(the rm2(yi, Vi,data, slab='study')), => gives i^2 and TAU^2(how much var. between study).
+# do summary of model(the rm2(yi, Vi,data, slab='study')), => gives i^2 and TAU^2(how much var. between study).
 ```
 
 ## Tips on the process to follow:
