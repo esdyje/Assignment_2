@@ -31,7 +31,7 @@ data=read.csv("Data.csv", sep=";")
 
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
 ```{r}
-
+do summary of model(the rm2(yi, Vi,data, slab='study')), => gives i^2 and TAU^2(how much var. between study).
 ```
 
 ## Tips on the process to follow:
