@@ -6,9 +6,13 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# set WD
 setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
-data=("Data.csv")
+
+#library to relevant packages
+
+#read data
+data=read.csv("Data.csv", sep=";")
 ```
 
 # Building on the shoulders of giants: meta-analysis
@@ -16,10 +20,19 @@ data=("Data.csv")
 ## Questions to be answered
 
 1. What is the current evidence for distinctive patterns of pitch mean and pitch sd in schizophrenia? Report how many papers report quantitative estimates, your method to analyze them, the estimated effect size of the difference (mean effect size and standard error for pitch mean, same for pitch sd) and forest plots representing it. 
+```{r}
+
+```
 
 2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
+```{r}
+
+```
 
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
+```{r}
+
+```
 
 ## Tips on the process to follow:
 
@@ -33,3 +46,5 @@ data=("Data.csv")
 - Go back to Assignment 3, add your own study to the data table, and re-run meta-analysis. Do the results change?
 
 - Now look at the output of rma() and check tau and I2
+
+
