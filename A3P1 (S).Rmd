@@ -225,47 +225,37 @@ SCZdata=read.csv("Schizophrenia_data.csv")
 # To create one model per acoustic feature
 model1 = lmer(mean ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model1) #sig
-
 model2 = lmer(SD ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model2)
-
 model3 = lmer(range ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model3)
-
 model4 = lmer(median ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model4) #sig 
-
 model5 = lmer(IQR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model5)
-
 model6 = lmer(MAD ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model6)
-
 model7 = lmer(COV ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model7) #sig
-
 model8 = lmer(DET ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model8)
-
 model9 = lmer(maxL ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model9)
-
 model10 = lmer(RR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model10)
-
 model11 = lmer(L ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model11)
-
 m12 = lmer(ENTR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(m12) #sig!!!
-
 m13 = lmer(rENTR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(m13)
+
+# Significant predictors of diagnosis:
+# mean, Median, COV, ENTR.
+
+
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
 

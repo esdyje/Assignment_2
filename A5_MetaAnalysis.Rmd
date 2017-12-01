@@ -69,7 +69,8 @@ The overall estimated difference (Cohen’s d) in pitch variability between the 
 ###Exercise 
 2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
 ```{r}
-Pitch_data = read.csv("AllData.csv")
+#Pitch_data = read.csv("AllData.csv")
+Pitch_data=read.csv("Schizophrenia_data.csv")
 # Pitch_data = read.csv("dataPitch.csv")
 Pitch_data = Pitch_data[,-1]
 #mean
@@ -86,11 +87,11 @@ PitchSDControlsSD=sd(Pitch_data$SD[Pitch_data$Diagnosis=="Control"])
 #Counting participants from own dataset
 SampleSizeSchizo=length(unique(Pitch_data$Subject[Pitch_data$Diagnosis=="Schizophrenia"]))
 SampleSizeContros=length(unique(Pitch_data$Subject[Pitch_data$Diagnosis=="Control"]))
-Article="Studygroup et. al."
+Article="Prev. Schizophrenia assignment"
 Year=2017
 data11=data.frame(Article,Year,SampleSizeSchizo,SampleSizeContros,PitchMeanControls,PitchMeanControlsSD,PitchMeanSchizo,PitchMeanSchizoSD,PitchSDControls,PitchSDControlsSD,PitchSDSchizo,PitchSDSchizoSD)
 
-DATA=rbind(Datrbind,data)
+DATA=rbind(data11,data)
 
 ```
 
@@ -104,6 +105,7 @@ summary(ModelMEANDATA)
 
 resMDATA = rma(yi, vi, data = EffectSizeMean, slab=Article)
 forest(resMDATA)
+
 #counting participants
 SubsetMDATA=subset(EffectSizeMean[EffectSizeMean$vi>0,])
 sum(SubsetMDATA$SampleSizeSchizo, na.rm=T)
@@ -150,6 +152,8 @@ funnel(resMDATA, main = "Random-Effects Model",xlab = "Standardized Mean Differe
 regtest(resMDATA)
 ranktest(resMDATA)
 
+?ranktest()
+
 #influential...
 infM <- influence(resMDATA)
 print(infM)
@@ -170,6 +174,8 @@ summary(resSDDATA)
 funnel(resSDDATA, main = "Random-Effects Model",xlab = "Standardized Mean Difference")
 regtest(resSDDATA) #reg test is significant (P=.003), could indicate a publication bias. 
 ranktest(resSDDATA) "rank indicates 0"
+
+?influence()
 
 #influen...
 infSD <- influence(resSDDATA)
