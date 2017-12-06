@@ -130,7 +130,7 @@ TestData=data.frame(Accuracy, Specificity, Sensitivity, PPV, NPV, AUC)
 Which single predictor is the best predictor of diagnosis?
 ```{r}
 # Creating a function to find out which single acoustic predictor is the best predictor
-CVfunction = function(data, model) {
+CV_function = function(data, model) {
 
 # Creating empty variables
 Accuracy = NULL
@@ -147,30 +147,23 @@ for (fold in fold_list){
   
   # Creating training data set
   train = subset(data,! (folds_ID %in% fold))  
-  
   # Creating a test data set
   test = subset(data, (folds_ID %in% fold)) 
   
   # Training model
   m1=glmer(model, train, family = "binomial")
-  
   # Evaluating model
   test$PredictionsPerc=predict(m1, test, allow.new.levels = TRUE) 
   test$Predictions[test$PredictionsPerc>0]="Schizophrenia" 
   test$Predictions[test$PredictionsPerc<=0]="Control"
   
   cm=confusionMatrix(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
-  
   Accuracy[n] = cm$overall["Accuracy"]
-  
   test$Predictions = as.factor(test$Predictions)
 
   Sensitivity[n] =  sensitivity(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia" )
-  
-  Specificity [n] = specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control" ) 
-
+  Specificity [n] = specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control" )
   PPV[n] = posPredValue(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
-
   NPV[n] = negPredValue(data = test$Predictions, reference = test$Diagnosis, negative = "Control")  
   
   rocCurve = roc(response = test$Diagnosis,   predictor = test$PredictionsPerc) 
@@ -182,26 +175,48 @@ results = data.frame(Accuracy, Sensitivity, Specificity, PPV, NPV, AUC)
 return(results)
 }
 
-MeanResults = CVfunction(NewData, Diagnosis ~ mean + (1+Trial|Subject))
-SDresults = CVfunction(NewData, Diagnosis ~ SD + (1+Trial|Subject))
-MedianResults = CVfunction(NewData, Diagnosis ~ median + (1+Trial|Subject))
-RRresults = CVfunction(NewData, Diagnosis ~ RR + (1+Trial|Subject))
-ENTRresults = CVfunction(NewData, Diagnosis ~ ENTR + (1+Trial|Subject))
-rENTRresults = CVfunction(NewData, Diagnosis ~ rENTR + (1+Trial|Subject))
+MeanResults = CV_function(NewData, Diagnosis ~ mean + (1+Trial|Subject))
+SDresults = CV_function(NewData, Diagnosis ~ SD + (1+Trial|Subject))
+MedianResults = CV_function(NewData, Diagnosis ~ median + (1+Trial|Subject))
+RRresults = CV_function(NewData, Diagnosis ~ RR + (1+Trial|Subject))
+ENTRresults = CV_function(NewData, Diagnosis ~ ENTR + (1+Trial|Subject))
+rENTRresults = CV_function(NewData, Diagnosis ~ rENTR + (1+Trial|Subject))
 
-# Obtaining the mean area under the curve
-mean(SDresults$AUC)
-# 0.61
-mean(MeanResults$AUC) 
-# 0.57
-mean(MedianResults$AUC) 
-# 0.57
-mean(RRresults$AUC)
-# 0.51
-mean(ENTRresults$AUC) 
-# 0.61
-mean(rENTRresults$AUC) 
-# 0.56
+# Obtaining the mean Area Under the Curve
+mean(SDresults$AUC)# 0.62
+mean(MeanResults$AUC) # 0.55
+mean(MedianResults$AUC) # 0.56
+mean(RRresults$AUC)# 0.51
+mean(ENTRresults$AUC) # 0.60
+mean(rENTRresults$AUC) # 0.54
+
+```
+### Question 3 - Which combination of acoustic predictors is best for diagnosing schizophrenia?
+
+Now it's time to go wild! Use all (voice-related) variables and interactions you can think of. Compare models and select the best performing model you can find.
+
+Remember:
+- Out-of-sample error crucial to build the best model!
+- After choosing the model, send Celine and Riccardo the code of your model
+```{r}
+combination1 = CV_function(NewData, Diagnosis ~ mean*range + (1+Trial|Subject))
+combination2 = CV_function(NewData, Diagnosis ~ MAD*range + (1+Trial|Subject))
+combination3 = CV_function(NewData, Diagnosis ~ SD*range + (1+Trial|Subject))
+combination4 = CV_function(NewData, Diagnosis ~ SD*MAD + (1+Trial|Subject))
+combination5 = CV_function(NewData, Diagnosis ~ mean*ENTR + (1+Trial|Subject))
+combination6 = CV_function(NewData, Diagnosis ~ SD*rENTR + (1+Trial|Subject))
+combination7 = CV_function(NewData, Diagnosis ~ mean*range + (1+Trial|Subject))
+combination8 = CV_function(NewData, Diagnosis ~ mean*range + (1+Trial|Subject))
+
+mean(combination1$AUC) # mean AUC(.63)
+mean(combination2$AUC) # mean AUC(.63)
+mean(combination3$AUC) # mean AUC(.63)
+mean(combination4$AUC) # mean AUC(.64)
+mean(combination5$AUC) # mean AUC(.59)
+mean(combination6$AUC) # mean AUC(.60)
+mean(combination7$AUC) # mean AUC(.63)
+
+
 
 ```
 

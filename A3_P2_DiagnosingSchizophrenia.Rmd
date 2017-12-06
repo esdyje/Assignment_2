@@ -30,10 +30,9 @@ N.B. Now you have two levels of structure: subject and study. Should this impact
 
 #### Q 1 code
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE)
 names(data)[names(data) == 'diagnosis'] <- 'Diagnosis'
-names(data)[names(data) == 'trial'] <- 'Trial'
-names(data)[names(data) == 'participant'] <- 'Subject'
+names(data)[names(data) == 'Study'] <- 'Trial'
+#names(data)[names(data) == 'participant'] <- 'Subject'
 
 ggplot(data,aes(range,Diagnosis,colour=Diagnosis))+geom_point()+theme_classic()
 #control=0  schizophrenia = 1
