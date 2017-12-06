@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
-data=read.csv("Celine_data.csv")
+data=read.csv("Schizophrenia_data.csv")
 library(pastecs);library(lme4);library(lmerTest);library(ggplot2);library(caret);library(pROC);library(tidyverse);library(caret);library(cvms); library(groupdata2) 
 data=data[,-1]
 ```
@@ -258,7 +258,7 @@ mean(rENTR_results$AUC) #.53
 ### Question 4: Properly report the results
 
 METHODS SECTION: how did you analyse the data? That is, how did you extract the data, designed the models and compared their performance?
-
+ 
 RESULTS SECTION: can you diagnose schizophrenia based on voice? which features are used? Comment on the difference between the different performance measures.
 
 ### Bonus question 5

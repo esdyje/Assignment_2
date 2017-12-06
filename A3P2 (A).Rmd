@@ -1,0 +1,207 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Assignment 3 - Diagnosing schizophrenia from voice
+In the previous part of the assignment you generated a bunch of "features", that is, of quantitative descriptors of voice in schizophrenia, focusing on pitch.
+In the course of this assignment we will use them to try to automatically diagnose schizophrenia from voice only, that is, relying on the set of features you produced last time, we will try to produce an automated classifier.
+
+### Question 1: Can you diagnose schizophrenia from pitch range only? If so, how well?
+Build a logistic regression to see whether you can diagnose schizophrenia from pitch range only.
+
+Calculate the different performance measures (accuracy, sensitivity, specificity, PPV, NPV, ROC curve) on a logistic regression using the full dataset. Don't forget the random effects!
+
+Then cross-validate the logistic regression and re-calculate performance on the testing folds. N.B. The cross-validation functions you already have should be tweaked: you need to calculate these new performance measures.
+
+N.B. the predict() function generates log odds (the full scale between minus and plus infinity). Log odds > 0 indicates a choice of 1, below a choice of 0.
+N.B. you need to decide whether calculate performance on each single test fold or save all the prediction for test folds in one datase, so to calculate overall performance.
+N.B. Now you have two levels of structure: subject and study. Should this impact your cross-validation?
+```{r}
+
+setwd("~/OneDrive - Aarhus universitet/AU-Cognitive Science/3rd Semester/Experimental Methods 3/Exercise/Assignments/Assignment_2")
+data=read.csv("Schizophrenia_data.csv")
+
+library(pastecs);library(lme4);library(lmerTest);library(ggplot2);library(caret);library(pROC);library(tidyverse);library(caret);library(cvms); library(groupdata2) 
+
+#Reading libraries
+library(lmerTest)
+library(caret)
+library(pROC)
+
+#Reading the data
+data$Subject=as.factor(data$Subject)
+
+#Making a generalized linear model
+model1=glmer(Diagnosis~range + (1+Trial|Subject), data, family="binomial")
+summary(model1)
+
+#Creating confusion matrix
+data$PredictionsPerc=predict(model1)
+data$Predictions[data$PredictionsPerc>0]="Schizophrenia"
+data$Predictions[data$PredictionsPerc<=0]="Control"
+c=confusionMatrix(data = data$Predictions, reference = data$Diagnosis, positive = "Schizophrenia") 
+
+
+#Making a reciever operator curve
+rocCurve=roc(response=data$Diagnosis, predictor=data$PredictionsPerc)
+auc(rocCurve)
+ci(rocCurve)
+plot(rocCurve, legacy.axes=TRUE)
+
+#Cross-validating model
+
+# Adding fold_value
+fold_function = function(data, col) {
+
+  data$folds_ID = as.numeric(interaction(data[,col]))
+  
+  return(data[order(data$folds_ID),])
+}
+
+Data_Schizo = subset(data, data$Diagnosis == "Schizophrenia")
+Data_Control = subset(data, data$Diagnosis == "Control")
+
+Data_Schizo=fold_function(Data_Schizo, "Subject")
+Data_Control= fold_function(Data_Control, "Subject")
+
+# Creating folds
+folds_S = createFolds(unique(Data_Schizo$folds_ID), 5)
+folds_C= createFolds(unique(Data_Control$folds_ID), 5)
+
+# Combining data
+fold_list = c()
+fold_list$Fold1 = c(folds_S$Fold1, folds_C$Fold1)
+fold_list$Fold2 = c(folds_S$Fold2, folds_C$Fold2)
+fold_list$Fold3 = c(folds_S$Fold3, folds_C$Fold3)
+fold_list$Fold4 = c(folds_S$Fold4, folds_C$Fold4)
+fold_list$Fold5 = c(folds_S$Fold5, folds_C$Fold5)
+
+NewData = rbind(Data_Schizo, Data_Control)
+
+#Creating a loop
+
+Accuracy=NULL
+Specificity=NULL
+Sensitivity=NULL
+PPV=NULL
+NPV=NULL
+AUC=NULL
+
+n=1
+
+for (fold in fold_list){
+  #Creating a second training dataset 
+  train=subset(NewData,! (folds_ID %in% fold))
+  
+  #Creaing a second test dataset
+  test=subset(NewData, (folds_ID %in% fold))
+  
+  #Creating a model - train
+  TrainModel=glmer(Diagnosis~range + (1+Trial|Subject), train, family="binomial")
+  
+  test$PredictionsPerc=predict(TrainModel, test, allow.new.levels=TRUE)
+  test$Predictions[test$PredictionsPerc>0]="Schizophrenia"
+  test$Predictions[test$PredictionsPerc<=0]="Control"
+  
+  cm=confusionMatrix(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
+  
+  Accuracy[n]=cm$overall["Accuracy"]
+  
+  test$Predictions=as.factor(test$Predictions)
+  
+  Specificity[n]= specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control") 
+  Sensitivity[n]= sensitivity(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia")
+  PPV[n]= posPredValue(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia")
+  NPV[n]= negPredValue(data = test$Predictions, reference = test$Diagnosis, negative = "Control") 
+  
+  rocCurve=roc(response=test$Diagnosis, predictor=test$PredictionsPerc)
+  AUC[n]=auc(rocCurve)
+    
+  n=n+1
+ 
+}
+
+TestData=data.frame(Accuracy, Specificity, Sensitivity, PPV, NPV, AUC)
+
+```
+
+### Question 2
+Which single predictor is the best predictor of diagnosis?
+```{r}
+# Creating a function to find out which single acoustic predictor is the best predictor
+CVfunction = function(data, model) {
+
+# Creating empty variables
+Accuracy = NULL
+Specificity = NULL
+Sensitivity = NULL
+PPV = NULL
+NPV = NULL
+AUC = NULL
+
+n = 1
+
+# Creating a loop
+for (fold in fold_list){
+  
+  # Creating training data set
+  train = subset(data,! (folds_ID %in% fold))  
+  
+  # Creating a test data set
+  test = subset(data, (folds_ID %in% fold)) 
+  
+  # Training model
+  m1=glmer(model, train, family = "binomial")
+  
+  # Evaluating model
+  test$PredictionsPerc=predict(m1, test, allow.new.levels = TRUE) 
+  test$Predictions[test$PredictionsPerc>0]="Schizophrenia" 
+  test$Predictions[test$PredictionsPerc<=0]="Control"
+  
+  cm=confusionMatrix(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
+  
+  Accuracy[n] = cm$overall["Accuracy"]
+  
+  test$Predictions = as.factor(test$Predictions)
+
+  Sensitivity[n] =  sensitivity(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia" )
+  
+  Specificity [n] = specificity(data = test$Predictions, reference = test$Diagnosis, negative = "Control" ) 
+
+  PPV[n] = posPredValue(data = test$Predictions, reference = test$Diagnosis, positive = "Schizophrenia") 
+
+  NPV[n] = negPredValue(data = test$Predictions, reference = test$Diagnosis, negative = "Control")  
+  
+  rocCurve = roc(response = test$Diagnosis,   predictor = test$PredictionsPerc) 
+  AUC[n]=auc(rocCurve) 
+    
+  n=n+1  
+}
+results = data.frame(Accuracy, Sensitivity, Specificity, PPV, NPV, AUC)
+return(results)
+}
+
+MeanResults = CVfunction(NewData, Diagnosis ~ mean + (1+Trial|Subject))
+SDresults = CVfunction(NewData, Diagnosis ~ SD + (1+Trial|Subject))
+MedianResults = CVfunction(NewData, Diagnosis ~ median + (1+Trial|Subject))
+RRresults = CVfunction(NewData, Diagnosis ~ RR + (1+Trial|Subject))
+ENTRresults = CVfunction(NewData, Diagnosis ~ ENTR + (1+Trial|Subject))
+rENTRresults = CVfunction(NewData, Diagnosis ~ rENTR + (1+Trial|Subject))
+
+# Obtaining the mean area under the curve
+mean(SDresults$AUC)
+# 0.61
+mean(MeanResults$AUC) 
+# 0.57
+mean(MedianResults$AUC) 
+# 0.57
+mean(RRresults$AUC)
+# 0.51
+mean(ENTRresults$AUC) 
+# 0.61
+mean(rENTRresults$AUC) 
+# 0.56
+
+```
+

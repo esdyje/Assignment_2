@@ -256,6 +256,13 @@ summary(m13)
 # Significant predictors of diagnosis:
 # mean, DET, Median, COV, ENTR.
 
+# Is study a significant predictor? Does study interact with diagnosis
+m_study = lmer(mean ~ Diagnosis*Study + Trial + (1+Trial+Diagnosis|Subject), Schi_d)
+summary(m_study)
+
+# Study is not a significant predictor of the mean and does not interact with diagnosis. So it seems like there is no geographical difference between studies or effect of different experimenters. 
+
+
 ```
 
 
