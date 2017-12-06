@@ -155,7 +155,7 @@ Pitch_data=Pitch_data[,-1]
 ----
 
 # To create a variable according to the study
-for (file in 1:nrow(Pitch_d)){
+for (file in 1:nrow(Pitch_data)){
   if (grepl("Study1", Pitch_data$filename[file])){
     Pitch_data$Study[file] = 1}
   if (grepl("Study2", Pitch_data$filename[file])){
@@ -225,6 +225,9 @@ SCZdata=read.csv("Schizophrenia_data.csv")
 # To create one model per acoustic feature
 model1 = lmer(mean ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model1) #sig
+mean(SCZdata$mean[SCZdata$Diagnosis=="Schizophrenia"])
+
+
 model2 = lmer(SD ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model2)
 model3 = lmer(range ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
@@ -238,7 +241,7 @@ summary(model6)
 model7 = lmer(COV ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model7) #sig
 model8 = lmer(DET ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
-summary(model8)
+summary(model8) #sig
 model9 = lmer(maxL ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
 summary(model9)
 model10 = lmer(RR ~ Diagnosis + Trial + (1+Trial+Diagnosis|Subject) + (1|Study), SCZdata)
