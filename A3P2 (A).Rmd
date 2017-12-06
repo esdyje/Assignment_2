@@ -50,7 +50,6 @@ ci(rocCurve)
 plot(rocCurve, legacy.axes=TRUE)
 
 #Cross-validating model
-
 # Adding fold_value
 fold_function = function(data, col) {
 
@@ -175,20 +174,21 @@ results = data.frame(Accuracy, Sensitivity, Specificity, PPV, NPV, AUC)
 return(results)
 }
 
-MeanResults = CV_function(NewData, Diagnosis ~ mean + (1+Trial|Subject))
-SDresults = CV_function(NewData, Diagnosis ~ SD + (1+Trial|Subject))
-MedianResults = CV_function(NewData, Diagnosis ~ median + (1+Trial|Subject))
-RRresults = CV_function(NewData, Diagnosis ~ RR + (1+Trial|Subject))
-ENTRresults = CV_function(NewData, Diagnosis ~ ENTR + (1+Trial|Subject))
-rENTRresults = CV_function(NewData, Diagnosis ~ rENTR + (1+Trial|Subject))
+MeanResults    = CV_function(NewData, Diagnosis ~ mean + (1+Trial|Subject))
+SDresults      = CV_function(NewData, Diagnosis ~ SD + (1+Trial|Subject))
+MedianResults  = CV_function(NewData, Diagnosis ~ median + (1+Trial|Subject))
+RRresults      = CV_function(NewData, Diagnosis ~ RR + (1+Trial|Subject))
+ENTRresults    = CV_function(NewData, Diagnosis ~ ENTR + (1+Trial|Subject))
+rENTRresults   = CV_function(NewData, Diagnosis ~ rENTR + (1+Trial|Subject))
 
 # Obtaining the mean Area Under the Curve
 mean(SDresults$AUC)# 0.62
-mean(MeanResults$AUC) # 0.55
-mean(MedianResults$AUC) # 0.56
-mean(RRresults$AUC)# 0.51
-mean(ENTRresults$AUC) # 0.60
+mean(MeanResults$AUC) # 0.56
+mean(MedianResults$AUC) # 0.57
+mean(RRresults$AUC)# 0.52
+mean(ENTRresults$AUC) # 0.61
 mean(rENTRresults$AUC) # 0.54
+
 
 ```
 ### Question 3 - Which combination of acoustic predictors is best for diagnosing schizophrenia?
@@ -208,13 +208,13 @@ combination6 = CV_function(NewData, Diagnosis ~ SD*rENTR + (1+Trial|Subject))
 combination7 = CV_function(NewData, Diagnosis ~ mean*range + (1+Trial|Subject))
 combination8 = CV_function(NewData, Diagnosis ~ mean*range + (1+Trial|Subject))
 
-mean(combination1$AUC) # mean AUC(.63)
-mean(combination2$AUC) # mean AUC(.63)
-mean(combination3$AUC) # mean AUC(.63)
-mean(combination4$AUC) # mean AUC(.64)
-mean(combination5$AUC) # mean AUC(.59)
-mean(combination6$AUC) # mean AUC(.60)
-mean(combination7$AUC) # mean AUC(.63)
+mean(combination1$AUC) # mean AUC(.629)
+mean(combination2$AUC) # mean AUC(.630)
+mean(combination3$AUC) # mean AUC(.631)
+mean(combination4$AUC) # mean AUC(.637) SD*MAD **WINNER**
+mean(combination5$AUC) # mean AUC(.582)
+mean(combination6$AUC) # mean AUC(.609)
+mean(combination7$AUC) # mean AUC(.629)
 
 
 
