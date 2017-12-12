@@ -32,6 +32,7 @@ PitchRangeM=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=Pitch
 ModelM = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchRangeM, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
 summary(ModelM)
 
+(scipen=3) 
 resM = rma(yi, vi, data = PitchRangeM, slab=Article)
 summary(resM)
 forest(resM)
